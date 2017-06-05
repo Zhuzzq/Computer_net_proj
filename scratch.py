@@ -11,7 +11,11 @@ userfile.close()
 # cookiefile = open('cookie.txt')
 # cookie = cookiefile.read().strip()
 
-for userid in users[0]:
+for userid in users[1:]:
+    userid=userid.strip()
+    print('user ID:'+userid)
+    info_url = 'https://m.weibo.cn/u/%s?uid=%s&featurecode=20000180' % (userid, userid)
+
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate, sdch',
@@ -32,13 +36,14 @@ for userid in users[0]:
     else:
         print('First Connection Failed')
 
-    print(h.text)
+    # print(h.text)
 
     # get first page of followings and some info
     text = json.loads(h.text)
     # print(type(text))
-    # print(text)
+    print(text)
     pagecnt = text['maxPage']
+    print(pagecnt)
     fllwingcnt = text['count']
     # print(pagecnt)
     # print(fllwingcnt)
