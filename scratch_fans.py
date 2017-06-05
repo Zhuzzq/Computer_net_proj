@@ -12,13 +12,12 @@ userfile.close()
 # cookie = cookiefile.read().strip()
 
 missing_user = []
-wf = open('followings.txt', 'w')
+wf = open('fans.txt', 'w')
 
 for userid in users:
     userid = userid.strip()
     print('user ID:' + userid)
     user_info = {}
-    info_url = 'https://m.weibo.cn/u/%s?uid=%s&featurecode=20000180' % (userid, userid)
 
     headers = {
         'Accept': 'application/json, text/plain, */*',
@@ -33,7 +32,8 @@ for userid in users:
         'X-Requested-With': 'XMLHttpRequest'
     }
 
-    URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS' % userid
+    URL = 'https: // m.weibo.cn / api / container / getSecond?containerid = 100505%s_ - _FANS' % userid
+
     try:
         h = requests.get(url=URL, headers=headers)
         if h.text:
@@ -63,7 +63,7 @@ for userid in users:
 
             # get all followings
             for page in range(2, int(pagecnt) + 1):
-                time.sleep(random.random() * 2)
+                time.sleep(random.random() * 5)
                 URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS&page=%d' % (
                 userid, page)
                 h = requests.get(url=URL, headers=headers)
@@ -87,7 +87,7 @@ for userid in users:
         missing_user.append(userid)
 
 wf.close()
-missing_file = open('missing_list.txt', 'w')
+missing_file = open('fans_missing_list.txt', 'w')
 for item in missing_user:
     missing_file.write(item + '\n')
 missing_file.close()
