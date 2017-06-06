@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import requests, json, codecs, random, time
+import logging
 from matplotlib import pyplot as plt
 
 # get the response
@@ -58,14 +59,14 @@ for userid in users:
             allusers = text['cards']
             # print(allusers)
             for dict_item in allusers:
-                user_dict=dict_item['user']
+                user_dict = dict_item['user']
                 flwing_list.append(user_dict['id'])
 
             # get all followings
             for page in range(2, int(pagecnt) + 1):
                 time.sleep(random.random() * 2)
                 URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS&page=%d' % (
-                userid, page)
+                    userid, page)
                 h = requests.get(url=URL, headers=headers)
                 text = json.loads(h.text)
                 if text['ok'] == 1:
@@ -75,19 +76,19 @@ for userid in users:
                         user_dict = dict_item['user']
                         flwing_list.append(user_dict['id'])
 
-                    # print(allusers)
+                        # print(allusers)
 
         # user_info['flwing_cnt'] = len(allusers)
-        wf.write(userid+' '+str(fllwingcnt))
+        wf.write(userid + ' ' + str(fllwingcnt))
         for nameid in flwing_list:
-            wf.write(' '+str(nameid))
+            wf.write(' ' + str(nameid))
         wf.write('\n')
 
     except:
         missing_user.append(userid)
 
 wf.close()
-missing_file = open('missing_list.txt', 'w')
+missing_file = open('flwings_missing_list.txt', 'w')
 for item in missing_user:
     missing_file.write(item + '\n')
 missing_file.close()
