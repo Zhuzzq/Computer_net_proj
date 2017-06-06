@@ -5,6 +5,8 @@ import requests, json, codecs, random, time
 import logging
 from matplotlib import pyplot as plt
 
+logging.basicConfig(level=logging.INFO)
+
 # get the response
 userfile = open('user.txt')
 users = userfile.readlines()
@@ -14,10 +16,11 @@ userfile.close()
 
 missing_user = []
 wf = open('followings.txt', 'w')
+procnt = 0
 
 for userid in users:
     userid = userid.strip()
-    print('user ID:' + userid)
+    logging.info('user ID:' + userid)
     user_info = {}
     info_url = 'https://m.weibo.cn/u/%s?uid=%s&featurecode=20000180' % (userid, userid)
 
@@ -37,10 +40,10 @@ for userid in users:
     URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS' % userid
     try:
         h = requests.get(url=URL, headers=headers)
-        if h.text:
-            print('First Connection Succeeded')
-        else:
-            print('First Connection Failed')
+        # if h.text:
+        #     logging.info('First Connection Succeeded')
+        # else:
+        #     logging.warning('First Connection Failed')
 
         # print(h.text)
 
@@ -49,43 +52,48 @@ for userid in users:
         # print(type(text))
         print(text)
         flwing_list = []
-        if text['ok']:
-            pagecnt = text['maxPage']
-            print(pagecnt)
-            fllwingcnt = text['count']
-            # print(pagecnt)
-            # print(fllwingcnt)
+        pagecnt = text['maxPage']
+        # print(pagecnt)
+        fllwingcnt = text['count']
+        # print(pagecnt)
+        # print(fllwingcnt)
 
-            allusers = text['cards']
-            # print(allusers)
-            for dict_item in allusers:
-                user_dict = dict_item['user']
-                flwing_list.append(user_dict['id'])
+        allusers = text['cards']
+        # print(allusers)
+        for dict_item in allusers:
+            user_dict = dict_item['user']
+            flwing_list.append(user_dict['id'])
 
-            # get all followings
-            for page in range(2, int(pagecnt) + 1):
-                time.sleep(random.random() * 2)
-                URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS&page=%d' % (
-                    userid, page)
-                h = requests.get(url=URL, headers=headers)
-                text = json.loads(h.text)
-                if text['ok'] == 1:
-                    # print(text)
-                    allusers = text['cards']
-                    for dict_item in allusers:
-                        user_dict = dict_item['user']
-                        flwing_list.append(user_dict['id'])
+        # get all followings
+        for page in range(2, int(pagecnt) + 1):
+            time.sleep(random.random() * 3)
+            URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS&page=%d' % (
+                userid, page)
+            h = requests.get(url=URL, headers=headers)
+            text = json.loads(h.text)
+            if text['ok'] == 1:
+                # print(text)
+                allusers = text['cards']
+                for dict_item in allusers:
+                    user_dict = dict_item['user']
+                    flwing_list.append(user_dict['id'])
 
-                        # print(allusers)
+                    # print(allusers)
 
         # user_info['flwing_cnt'] = len(allusers)
         wf.write(userid + ' ' + str(fllwingcnt))
         for nameid in flwing_list:
             wf.write(' ' + str(nameid))
         wf.write('\n')
+        logging.info('Scratch Succeeded!')
+        procnt += 1
+        logging.info(procnt, 'Done!')
+        time.sleep(random.random() * 5)
 
     except:
+        logging.warning('Scratch Failed!')
         missing_user.append(userid)
+        time.sleep(random.random() * 11)
 
 wf.close()
 missing_file = open('flwings_missing_list.txt', 'w')
