@@ -8,6 +8,7 @@ import scipy.io as scio
 import sklearn
 import matplotlib
 
+
 file = codecs.open('new_info.txt', 'r', 'utf-8')
 lines = file.readlines()
 file.close()
