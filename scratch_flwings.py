@@ -14,8 +14,8 @@ userfile.close()
 # cookiefile = open('cookie.txt')
 # cookie = cookiefile.read().strip()
 
-missing_user = []
 wf = open('followings.txt', 'w')
+missing_file = open('flwings_missing_list.txt', 'w')
 procnt = 0
 
 for userid in users:
@@ -66,7 +66,7 @@ for userid in users:
 
         # get all followings
         for page in range(2, int(pagecnt) + 1):
-            time.sleep(random.random() * 3)
+            time.sleep(random.random() + 1)
             URL = 'http://m.weibo.cn/api/container/getSecond?containerid=100505%s_-_FOLLOWERS&page=%d' % (
                 userid, page)
             h = requests.get(url=URL, headers=headers)
@@ -88,15 +88,12 @@ for userid in users:
         logging.info('Scratch Succeeded!')
         procnt += 1
         logging.info(procnt, 'Done!')
-        time.sleep(random.random() * 5)
+        time.sleep(random.random() * 2)
 
     except:
         logging.warning('Scratch Failed!')
-        missing_user.append(userid)
-        time.sleep(random.random() * 11)
+        missing_file.write(userid + '\n')
+        time.sleep(random.random() * 3)
 
 wf.close()
-missing_file = open('flwings_missing_list.txt', 'w')
-for item in missing_user:
-    missing_file.write(item + '\n')
 missing_file.close()

@@ -1,11 +1,11 @@
-filepath = open('sockpuppet.txt')
+filepath = open('groundtruth.txt')# open('sockpuppet.txt')
 ori = filepath.readlines()
 filepath.close()
 
 dup = '1001000002'
 
-wf = open('new_sockpuppet.txt', 'w')
-uf=open('user.txt', 'w')
+wf = open('0new_sockpuppet.txt', 'w')
+uf=open('new_user.txt', 'w')
 new = []
 i = 0
 for items in ori:
