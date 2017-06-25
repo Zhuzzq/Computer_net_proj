@@ -7,10 +7,12 @@ import Levenshtein
 import logging
 import random
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+import time
+from sklearn.model_selection import KFold
 import numpy as np
 import scipy.io as scio
-import sklearn
-import matplotlib
+from matplotlib import pyplot as plt
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,6 +45,16 @@ for line in info_data:
 valid_users = list(info_dict.keys())
 user_num = len(valid_users)
 print(user_num)
+
+flw_file = open('new_followings.txt')
+flw_data = flw_file.readlines()
+flw_file.close()
+flw_dict = {}
+for lines in flw_data:
+    items = lines.strip().split()
+    flw_dict[items[0]] = items[2:]
+valid_flw = list(flw_dict.keys())
+print(len(flw_dict))
 
 
 def gen_label(uid1, uid2):
@@ -127,42 +139,101 @@ def gen_data(dict1, dict2):
     return result
 
 
+def gen_flw(uid1, uid2):
+    if not valid_flw.__contains__(uid1) and not valid_flw.__contains__(uid2):
+        return 0, 0
+    elif valid_flw.__contains__(uid1) and not valid_flw.__contains__(uid2):
+        return flw_dict[uid1].__contains__(uid2), 0
+    elif not valid_flw.__contains__(uid1) and valid_flw.__contains__(uid2):
+        return flw_dict[uid2].__contains__(uid1), 0
+    else:
+        return 2, len(list(a for a in flw_dict[uid1] if a in flw_dict[uid2])) \
+               / (
+                   len(flw_dict[uid1]) + len(flw_dict[uid2]) - len(
+                       list(a for a in flw_dict[uid1] if a in flw_dict[uid2])))
+
+
 logging.info('Prepare Data!')
-train_num = 10000
+train_num = 8000
 data = []
 labels = []
-uidpool=[]
+uidpool = []
 for i in range(0, train_num):
     order1 = random.randint(0, user_num - 1)
     order2 = random.randint(0, user_num - 1)
     uid1 = valid_users[order1]
-    uid2 = valid_users[order2]
-    if random.random() >= 0.001:
-        # print('+-1')
-        uid2 = same_line_dict[uid1][random.randint(0, len(same_line_dict[uid1]) - 1)]
+    uid2 = same_line_dict[uid1][random.randint(0, len(same_line_dict[uid1]) - 1)]
+    # uid2 = valid_users[order2]
+    # if random.random() >= 0:
+    #     # print('+-1')
+    #     uid2 = same_line_dict[uid1][random.randint(0, len(same_line_dict[uid1]) - 1)]
     flag1, dict1 = get_info(uid1)
     flag2, dict2 = get_info(uid2)
-    while (uid1 == uid2 or uidpool.__contains__([uid1,uid2]) or not flag1 or not flag2):
+    while (uid1 == uid2 or uidpool.__contains__([uid1, uid2]) or not flag1 or not flag2):
         order1 = random.randint(0, user_num - 1)
         order2 = random.randint(0, user_num - 1)
         uid1 = valid_users[order1]
         uid2 = valid_users[order2]
         flag1, dict1 = get_info(uid1)
         flag2, dict2 = get_info(uid2)
-    uidpool.append([uid1,uid2])
-    uidpool.append([uid2,uid1])
-    data.append(gen_data(dict1, dict2))
+    uidpool.append([uid1, uid2])
+    uidpool.append([uid2, uid1])
+    tmp_data = gen_data(dict1, dict2)
+    flw1, flw2 = gen_flw(uid1, uid2)
+    # data.append(gen_data(dict1, dict2))
+    tmp_data.append(flw1)
+    tmp_data.append(flw2)
+    data.append(tmp_data)
     labels.append(gen_label(uid1, uid2))
     # print(uid1, uid2)
 print(data)
 print(labels)
-print('total train number:', train_num)
-print('pos_samples:', labels.count('1'))
+print('total number:', train_num)
+print('total positive samples:', labels.count('1'))
 
 logging.info('Start Training!')
-rf = RandomForestClassifier(n_estimators=10, n_jobs=3,
-                            verbose=0)
-rf.fit(data[0:int(train_num/2)], labels[0:int(train_num/2)])
+rf = RandomForestClassifier(n_estimators=40, n_jobs=4, verbose=0)
+accur = []
+begin_time=time.time()
+for order in range(0, 10):
+    ratio = 9 / 10
+    train_data = []
+    train_labels = []
+    test_data = []
+    test_labels = []
+    for i in range(0, train_num):
+        if random.random() > ratio:
+            test_data.append(data[i])
+            test_labels.append(labels[i])
+        else:
+            train_data.append(data[i])
+            train_labels.append(labels[i])
 
-logging.info('Start Predict!')
-print(rf.score(data[int(train_num/2):], labels[int(train_num/2):]))
+    # print('train number:', len(train_labels))
+    # print('train positive samples:', train_labels.count('1'))
+    rf.fit(train_data, train_labels)
+
+    logging.info('Train Done!')
+
+    # print('Train accuracy:',
+    #       rf.score(train_data, train_labels))
+    # print('Test accuracy:',
+    #       rf.score(test_data, test_labels))
+    acc = rf.score(data, labels)
+    # print('Total accuracy:', acc)
+    accur.append(acc)
+end_time=time.time()
+print('Feature Weight:')
+# print('Feature Weight:', rf.feature_importances_)
+features = ['verified', 'verified_type', 'gender', 'isLongText', 'urank', 'statuses_diff',
+            'followers_diff', 'follows_diff', 'reposts_diff', 'comment_diff', 'attitudes_diff',
+            'screen_name_similarity', 'description_similarity', 'text_similarity', 'co_follow', 'in_follows']
+for i in range(0, 16):
+    print(features[i], ':', rf.feature_importances_[i])
+
+print('Total accuracy', rf.score(data, labels))
+
+scores = cross_val_score(rf, data, labels, cv=10)
+print(sum(scores) / 10)
+
+print('time:',end_time-begin_time)
