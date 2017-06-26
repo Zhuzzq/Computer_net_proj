@@ -2,12 +2,12 @@
 
 #### A sockpuppet analysis of Sina Weibo
 
-* Scratch the users' info
+* Scrape the users' info and posts
 * Extract the features
-* Train a classifier
+* Train a classifier using random-forest
 
 #### Requirements:
 
-* Python3 with requests
+* Python3 with *requests, sklearn, Levenshtein*
 * More...
 
